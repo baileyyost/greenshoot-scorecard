@@ -57,9 +57,8 @@ Score on five metrics, each an integer from -3 to +3, using these exact anchors:
 ${RUBRIC}
 
 Operator rule (important):
-- Metrics 1, 2 and 4 are OPERATOR-dependent. Only score them if a SPECIFIC operator/founder is identified — provided in the input (a name or LinkedIn URL) or clearly found in your research.
-- If no specific operator is identified, set "operatorIdentified": false. For metrics 1, 2 and 4 set "scored": false (do NOT guess operator quality). For their rationale, briefly say no operator was identified.
-- If an operator IS identified, set "operatorIdentified": true and score all five metrics.
+- Metrics 1, 2 and 4 are OPERATOR-dependent. Score them whenever the inputs give you enough to assess the operator or founding team. That information can come from ANY source: a founder name, a LinkedIn URL, the "additional notes" / deck text / one-pager, an uploaded file, or your own web research. You do NOT need a LinkedIn or a formal name — a description of the founders and their backgrounds in the notes is enough. When you score them, set "operatorIdentified": true and score all five metrics.
+- Only when there is essentially NO operator information anywhere (no name, no profile, nothing in the notes or file, and nothing found in research) do you set "operatorIdentified": false, mark metrics 1, 2 and 4 as "scored": false, and briefly note no operator was identified. Do not guess in that case.
 Metrics 3 (Platform/ISV Quality) and 5 (AI Ecosystem Fit) are ALWAYS scored from evidence.
 
 Be concise and direct. Make clear judgments, no fluff. Each rationale max 2 sentences, grounded in what you found; note where evidence was thin.
@@ -280,14 +279,16 @@ function Scorecard({ pw, onLock }) {
       lines.push(`Platform / ISV: ${platform.trim() || "(infer from website / research)"}`);
       lines.push(`Platform website: ${platformUrl.trim() || "(none provided)"}`);
       lines.push(`Company: ${company.trim() || "(none — may be just the platform/ISV)"}`);
-      lines.push(`Founder / operator: ${founder.trim() || "(none provided)"}`);
-      lines.push(`Founder LinkedIn / profile: ${founderUrl.trim() || "(none provided)"}`);
+      if (founder.trim()) lines.push(`Founder / operator: ${founder.trim()}`);
+      if (founderUrl.trim()) lines.push(`Founder LinkedIn / profile: ${founderUrl.trim()}`);
+      if (!founder.trim() && !founderUrl.trim()) lines.push(`Founder / operator: no name or LinkedIn entered as a field — look for operator details in the notes below, any uploaded file, and your research before deciding whether an operator can be assessed.`);
       if (notes.trim()) lines.push(`\nAdditional notes:\n${notes.trim()}`);
       if (file?.kind === "text") lines.push(`\nUploaded file (${file.name}):\n${file.data}`);
 
       const instruction =
-        "\n\nResearch the above with web search — the platform (site/name), the company, and the founder (name + LinkedIn URL). Then score against the rubric. " +
-        "If no specific operator/founder is identified from the inputs or your research, set operatorIdentified=false and do not score metrics 1, 2 and 4. Return only the JSON object.";
+        "\n\nResearch the above with web search — the platform (site/name), the company, and the operator. Then score against the rubric. " +
+        "Use ALL operator information available — the founder fields, the additional notes / one-pager, any uploaded file, and your research — to score metrics 1, 2 and 4; a LinkedIn or formal name is NOT required. " +
+        "Only if there is genuinely no operator information anywhere, set operatorIdentified=false and leave metrics 1, 2 and 4 unscored. Return only the JSON object.";
 
       const userContent = [];
       if (file?.kind === "pdf") {
@@ -406,7 +407,7 @@ function Scorecard({ pw, onLock }) {
             ▍EVALUATE — PASTE LINKS, IT RESEARCHES
           </div>
           <div style={{ fontSize: 12, color: C.muted, marginBottom: 16, lineHeight: 1.5 }}>
-            Give it the platform's website (and a founder's LinkedIn if you have one). It searches the web, then scores. With no founder, the operator metrics (1, 2, 4) aren't scored.
+            Give it the platform's website, plus any founder info you have — a LinkedIn, a name, or just notes in the box below. It researches and scores. The operator metrics (1, 2, 4) score from any of those; only with no operator info at all are they left unscored.
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -427,13 +428,13 @@ function Scorecard({ pw, onLock }) {
             <input className="gs-input" value={founderUrl} onChange={(e) => setFounderUrl(e.target.value)} placeholder="https://linkedin.com/in/…  — leave blank if no operator yet" />
           </Field>
           <div style={{ height: 12 }} />
-          <Field label="Anything else (optional) — notes, deck text, a one-pager">
+          <Field label="Anything else (optional) — founder background, notes, deck text, a one-pager">
             <textarea
               className="gs-input"
               style={{ minHeight: 84, resize: "vertical", lineHeight: 1.5 }}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Optional. Leave blank to let it research from the links alone."
+              placeholder="Optional. Founder details you paste here ARE scored on metrics 1, 2 and 4 — no LinkedIn needed. Leave blank to let it research from the links alone."
             />
           </Field>
 
